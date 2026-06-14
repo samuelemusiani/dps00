@@ -84,7 +84,6 @@ async def fetch_departures_for_station(station: Station, client: httpx.AsyncClie
     for d in raw:
         scheduled = datetime.fromtimestamp(int(d["time"]), tz=BELGIUM_TZ)
         minutes_until = (scheduled - now).total_seconds() / 60
-        print(f"DEBUG: Station {station.name} - Train {d['vehicleinfo']['number']} to {d['station']} scheduled at {scheduled.isoformat()} (in {minutes_until:.1f} minutes)")
         if 0 <= minutes_until <= 15:
             departures.append(Departure(
                 train_number=d["vehicleinfo"]["number"],
@@ -92,11 +91,8 @@ async def fetch_departures_for_station(station: Station, client: httpx.AsyncClie
                 scheduled_time=scheduled.isoformat(),
                 delay_minutes=int(d["delay"]) // 60,
             ))
-            print(d)
     return departures
 
-
-# --- Endpoint ---
 
 @app.get(
     "/departures",
