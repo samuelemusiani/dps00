@@ -37,7 +37,7 @@ function search(query: string) {
     } finally {
       loading.value = false
     }
-    executionTime.value = performance.now() - now
+    executionTime.value = Math.floor(performance.now() - now)
   }, 300)
 }
 
