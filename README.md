@@ -59,6 +59,9 @@ I'm interested in learning React, but I don't feel confident enough to use it
 for this project, especially considering the tight deadline and the follow up
 interview with questions about the code.
 
+For the UI library I chose to use DaisyUI and Tailwind CSS because they are easy
+to use and allow me to quickly build a simple and clean UI.
+
 ### Fuzzy search
 
 Fuzzy search was not mandatory but it's actually very useful and easy to add.
