@@ -14,16 +14,20 @@ const executionTime = ref(0)
 let debounceTimer: ReturnType<typeof setTimeout>
 
 watch(query, (val) => {
+  search(val)
+})
+
+function search(query: string) {
   clearTimeout(debounceTimer)
   result.value = null
   error.value = null
-  if (val.length < 3) return
+  if (query.length < 3) return
   debounceTimer = setTimeout(async () => {
     const now = performance.now()
 
     loading.value = true
     try {
-      result.value = await fetchDepartures(val)
+      result.value = await fetchDepartures(query)
     } catch (e) {
       if (e instanceof Error) {
         error.value = e.message ?? 'Unknown error'
@@ -35,12 +39,21 @@ watch(query, (val) => {
     }
     executionTime.value = performance.now() - now
   }, 300)
-})
+}
 
 const totalDepartures = computed(() => {
   if (!result.value) return 0
   return result.value.stations.reduce((sum, station) => sum + station.departures.length, 0)
 })
+
+function triggerSearch() {
+  if (query.value.length < 3) {
+    error.value = 'Please enter at least 3 characters to search.'
+    result.value = null
+    return
+  }
+  search(query.value)
+}
 </script>
 
 <template>
@@ -49,7 +62,13 @@ const totalDepartures = computed(() => {
 
     <label class="input w-96">
       <Icon icon="mdi:magnify" class="text-gray-500" />
-      <input v-model="query" type="search" required placeholder="Search station…" />
+      <input
+        v-model="query"
+        type="search"
+        required
+        placeholder="Search station…"
+        @keydown.enter.prevent="triggerSearch"
+      />
     </label>
 
     <div v-if="loading" class="flex items-center gap-2 text-gray-500">
