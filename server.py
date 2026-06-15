@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Query, HTTPException
 from pydantic import BaseModel
-from typing import List
+from typing import List, cast
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import httpx
 from rapidfuzz import fuzz
+from cachetools import TTLCache
 
 app = FastAPI(title="Lagovia Train Tracker")
 
@@ -22,6 +23,8 @@ DEBUG_DATE: str | None = None
 FUZZY_SEARCH: bool = True # False to disable fuzzy search and use simple substring matching
 FUZZY_THRESHOLD: int = 85 # Minimum score for fuzzy matching (0-100)
 
+CACHE_TTL_STATIONS = 120  # Cache station for 1 minute
+CACHE_TTL_DEPARTURES = 30  # Cache departures for 10 seconds
 
 class Departure(BaseModel):
     train_number: str
@@ -56,8 +59,15 @@ def station_match(query: str, name: str) -> bool:
 
     return fuzz.partial_ratio(query.lower(), name.lower()) >= FUZZY_THRESHOLD
 
+station_cache = TTLCache(maxsize=512, ttl=CACHE_TTL_STATIONS)
+departure_cache = TTLCache(maxsize=512, ttl=CACHE_TTL_DEPARTURES)
+
 async def search_stations(query: str, client: httpx.AsyncClient) -> List[Station]:
     """Return stations whose name contains `query` as a case-insensitive substring."""
+
+    if query in station_cache:
+        return cast(List[Station], station_cache[query])
+
     response = await client.get(
         f"{IRAIL_BASE}/stations/",
         params={"format": "json", "lang": "en"},
@@ -65,15 +75,22 @@ async def search_stations(query: str, client: httpx.AsyncClient) -> List[Station
     )
     response.raise_for_status()
     stations = response.json()["station"]
-    return [
+    stations = [
         Station(id=s["id"], name=s["name"])
         for s in stations
         if station_match(query, s["name"])
     ]
 
+    station_cache[query] = stations
+    return stations
+
 
 async def fetch_departures_for_station(station: Station, client: httpx.AsyncClient) -> List[Departure]:
     """Return departures within the next 15 minutes for the given station."""
+
+    if station.id in departure_cache:
+        return cast(List[Departure], departure_cache[station.id])
+
     params = {"id": station.id, "format": "json", "lang": "en", "arrdep": "departure"}
     if DEBUG_TIME:
         params["time"] = DEBUG_TIME
@@ -102,6 +119,7 @@ async def fetch_departures_for_station(station: Station, client: httpx.AsyncClie
                 scheduled_time=scheduled.isoformat(),
                 delay_minutes=int(d["delay"]) // 60,
             ))
+    departure_cache[station.id] = departures
     return departures
 
 
