@@ -13,8 +13,8 @@ IRAIL_BASE = "https://api.irail.be/v1"
 HEADERS = {"User-Agent": "lagovia-train-tracker/1.0.0 (github.com/samuelemusiani; samuele.musiani@tum.de)"}
 
 # For testing
-DEBUG_TIME: str | None = "0110"  
-DEBUG_DATE: str | None = "15062026"
+DEBUG_TIME: str | None = None
+DEBUG_DATE: str | None = None
 
 
 class Departure(BaseModel):
