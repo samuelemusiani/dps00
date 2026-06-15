@@ -28,16 +28,6 @@ watch(query, (val) => {
     }
   }, 300)
 })
-
-function delayBadgeClass(minutes: number) {
-  if (minutes === 0) return 'badge badge-success'
-  if (minutes <= 5) return 'badge badge-warning'
-  return 'badge badge-error'
-}
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
 </script>
 
 <template>
