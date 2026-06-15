@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { fetchDepartures } from '@/api'
 import type { DeparturesResponse } from '@/api'
 import StationCard from '@/components/StationCard.vue'
@@ -9,6 +9,7 @@ const query = ref('')
 const result = ref<DeparturesResponse | null>(null)
 const error = ref<string | null>(null)
 const loading = ref(false)
+const executionTime = ref(0)
 
 let debounceTimer: ReturnType<typeof setTimeout>
 
@@ -18,15 +19,27 @@ watch(query, (val) => {
   error.value = null
   if (val.length < 3) return
   debounceTimer = setTimeout(async () => {
+    const now = performance.now()
+
     loading.value = true
     try {
       result.value = await fetchDepartures(val)
-    } catch (e: any) {
-      error.value = e.message ?? 'Unknown error'
+    } catch (e) {
+      if (e instanceof Error) {
+        error.value = e.message ?? 'Unknown error'
+      } else {
+        error.value = 'Unknown error'
+      }
     } finally {
       loading.value = false
     }
+    executionTime.value = performance.now() - now
   }, 300)
+})
+
+const totalDepartures = computed(() => {
+  if (!result.value) return 0
+  return result.value.stations.reduce((sum, station) => sum + station.departures.length, 0)
 })
 </script>
 
@@ -50,6 +63,14 @@ watch(query, (val) => {
     </div>
 
     <template v-else-if="result">
+      <div>
+        <p class="text-gray-500">
+          Found
+          {{ result.stations.length }} station{{ result.stations.length > 1 ? 's' : '' }} and
+          {{ totalDepartures }} departure{{ totalDepartures > 1 ? 's' : '' }} in
+          {{ executionTime }} ms.
+        </p>
+      </div>
       <StationCard v-for="station in result.stations" :key="station.station" :station="station" />
       <p v-if="result.stations.length === 0" class="text-gray-400">
         No stations matched your search.
