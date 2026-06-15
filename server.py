@@ -4,6 +4,7 @@ from typing import List
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import httpx
+from rapidfuzz import fuzz
 
 app = FastAPI(title="Lagovia Train Tracker")
 
@@ -12,9 +13,14 @@ BELGIUM_TZ = ZoneInfo("Europe/Brussels")
 IRAIL_BASE = "https://api.irail.be/v1"
 HEADERS = {"User-Agent": "lagovia-train-tracker/1.0.0 (github.com/samuelemusiani; samuele.musiani@tum.de)"}
 
-# For testing
+# For testing, as sometimes the current time may not have any departures
+# Format must be HHMM for time and DDMMYYYY for date.
 DEBUG_TIME: str | None = None
 DEBUG_DATE: str | None = None
+
+# Fuzzy search settings
+FUZZY_SEARCH: bool = True # False to disable fuzzy search and use simple substring matching
+FUZZY_THRESHOLD: int = 85 # Minimum score for fuzzy matching (0-100)
 
 
 class Departure(BaseModel):
@@ -44,6 +50,12 @@ class Station(BaseModel):
     name: str
 
 
+def station_match(query: str, name: str) -> bool:
+    if not FUZZY_SEARCH:
+        return query.lower() in name.lower()
+
+    return fuzz.partial_ratio(query.lower(), name.lower()) >= FUZZY_THRESHOLD
+
 async def search_stations(query: str, client: httpx.AsyncClient) -> List[Station]:
     """Return stations whose name contains `query` as a case-insensitive substring."""
     response = await client.get(
@@ -56,7 +68,7 @@ async def search_stations(query: str, client: httpx.AsyncClient) -> List[Station
     return [
         Station(id=s["id"], name=s["name"])
         for s in stations
-        if query.lower() in s["name"].lower()
+        if station_match(query, s["name"])
     ]
 
 
@@ -86,8 +98,7 @@ async def fetch_departures_for_station(station: Station, client: httpx.AsyncClie
         minutes_until = (scheduled - now).total_seconds() / 60
         if 0 <= minutes_until <= 15:
             departures.append(Departure(
-                train_number=d["vehicleinfo"]["number"],
-                destination=d["station"],
+                train_number=d["vehicleinfo"]["number"], destination=d["station"],
                 scheduled_time=scheduled.isoformat(),
                 delay_minutes=int(d["delay"]) // 60,
             ))
