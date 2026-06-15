@@ -47,16 +47,16 @@ npm run dev
 ### Backend
 
 My preferred choice for the backend is usually Go, but I chose to use Python for
-this project because it was in the recommended tech stack and I feel comfortable
+this project because it was in the recommended tech stack and I feel confortable
 enough with Python, although I don't have much experience with FastAPI.
 I also wanted to try FastAPI for a while, so this project was a good opportunity to
 do it.
 
 ### Frontend 
 
-I chose to use Vue for its simplicity and because its the framework I know best.
+I chose to use Vue for its semplicity and because its the framework I know best.
 I'm interested in learning React, but I don't feel confident enough to use it
-for this project, especially considering the tight deadline and the follow up
+for this project, expecially considering the tight deadline and the followup
 interview with questions about the code.
 
 ### Fuzzy search
@@ -68,7 +68,7 @@ with the station names.
 
 ### Caching
 
-Because querying the irail APIs for every user input is not efficient and can
+Because quering the irail APIs for every user input is not efficient and can
 lead to rate limiting, I implemented a simple caching mechanism using
 [chachetools](https://pypi.org/project/cachetools/). The cache is a simple
 in-memory TTL cache that stores the results of the API calls for a certain amount
@@ -100,6 +100,6 @@ is the result of running it on my machine:
 
 The backend implementation took around 1 hour. The frontend implementation
 took around 1 hour. The caching (because I was stuck trying to make the irail
-API caching work) too around 2 hours. Probably the actual caching implementation
+API caching work) too around 2 hours. Probably the acctual caching implementation
 took around 30 minutes. Adding 1/2 hours for everything else (setup, debugging,
 benchmarking, etc) the total time spent on the project is around **5/6 hours**.
