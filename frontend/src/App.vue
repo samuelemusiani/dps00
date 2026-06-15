@@ -1,8 +1,11 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import MainView from './components/MainView.vue'
+</script>
 
 <template>
-  <h1>Lagovia Train Tracker</h1>
-  <p>Body</p>
+  <div class="p-2">
+    <MainView />
+  </div>
 </template>
 
 <style scoped></style>
